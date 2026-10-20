@@ -1,0 +1,6 @@
+trial,precision,recall,f1,true_positives,false_positives,false_negatives,repairs,recall_concept_drift,recall_corruption,recall_duplicate,recall_missing_data,recall_schema_drift
+1,0.7181,0.912,0.8035,456,179,44,100,0.56,1.0,1.0,1.0,1.0
+2,0.7177,0.91,0.8025,455,179,45,100,0.55,1.0,1.0,1.0,1.0
+3,0.7177,0.91,0.8025,455,179,45,100,0.55,1.0,1.0,1.0,1.0
+4,0.7186,0.914,0.8046,457,179,43,100,0.57,1.0,1.0,1.0,1.0
+5,0.719,0.916,0.8056,458,179,42,100,0.58,1.0,1.0,1.0,1.0

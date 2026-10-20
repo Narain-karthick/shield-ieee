@@ -1,0 +1,67 @@
+{
+  "trial_count": 5,
+  "classification": {
+    "precision": {
+      "mean": 0.71822,
+      "sample_sd": 0.000572,
+      "ci95_low": 0.71751,
+      "ci95_high": 0.71893
+    },
+    "recall": {
+      "mean": 0.9124,
+      "sample_sd": 0.002608,
+      "ci95_low": 0.909163,
+      "ci95_high": 0.915637
+    },
+    "f1": {
+      "mean": 0.80374,
+      "sample_sd": 0.001354,
+      "ci95_low": 0.802059,
+      "ci95_high": 0.805421
+    }
+  },
+  "per_fault_recall": {
+    "CONCEPT_DRIFT": {
+      "mean": 0.562,
+      "sample_sd": 0.013038,
+      "ci95_low": 0.545813,
+      "ci95_high": 0.578187
+    },
+    "CORRUPTION": {
+      "mean": 1.0,
+      "sample_sd": 0.0,
+      "ci95_low": 1.0,
+      "ci95_high": 1.0
+    },
+    "DUPLICATE": {
+      "mean": 1.0,
+      "sample_sd": 0.0,
+      "ci95_low": 1.0,
+      "ci95_high": 1.0
+    },
+    "MISSING_DATA": {
+      "mean": 1.0,
+      "sample_sd": 0.0,
+      "ci95_low": 1.0,
+      "ci95_high": 1.0
+    },
+    "SCHEMA_DRIFT": {
+      "mean": 1.0,
+      "sample_sd": 0.0,
+      "ci95_low": 1.0,
+      "ci95_high": 1.0
+    }
+  },
+  "repair_success_rate": {
+    "mean": 1.0,
+    "sample_sd": 0.0,
+    "ci95_low": 1.0,
+    "ci95_high": 1.0
+  },
+  "healthy_false_positive_rate": {
+    "mean": 0.0358,
+    "sample_sd": 0.0,
+    "ci95_low": 0.0358,
+    "ci95_high": 0.0358
+  }
+}

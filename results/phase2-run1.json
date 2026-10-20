@@ -1,0 +1,44 @@
+{
+  "ground_truth_incidents": 500,
+  "detections": 635,
+  "true_positives": 456,
+  "false_positives": 179,
+  "false_negatives": 44,
+  "precision": 0.7181,
+  "recall": 0.912,
+  "f1": 0.8035,
+  "repairs": 100,
+  "actions": {
+    "SHADOW_ACCEPT": 156,
+    "ABSTAIN_QUARANTINE": 436,
+    "AUTO_REPAIR": 100,
+    "DROP_DUPLICATE": 100
+  },
+  "per_fault": {
+    "CONCEPT_DRIFT": {
+      "injected": 100,
+      "detected": 56,
+      "recall": 0.56
+    },
+    "CORRUPTION": {
+      "injected": 100,
+      "detected": 100,
+      "recall": 1.0
+    },
+    "DUPLICATE": {
+      "injected": 100,
+      "detected": 100,
+      "recall": 1.0
+    },
+    "MISSING_DATA": {
+      "injected": 100,
+      "detected": 100,
+      "recall": 1.0
+    },
+    "SCHEMA_DRIFT": {
+      "injected": 100,
+      "detected": 100,
+      "recall": 1.0
+    }
+  }
+}

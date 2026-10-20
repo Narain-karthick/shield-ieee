@@ -1,0 +1,6 @@
+confluent-kafka==2.6.1
+pandas==2.2.3
+pyarrow==18.1.0
+requests==2.32.3
+prometheus-client==0.21.1
+
