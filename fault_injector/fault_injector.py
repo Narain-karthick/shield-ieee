@@ -33,13 +33,23 @@ def mutate(event: dict[str, Any], fault: str, intensity: float) -> list[dict[str
     return [changed]
 
 
-def incident(fault: str, event_id: str, intensity: float) -> dict[str, Any]:
+def incident(
+    fault: str,
+    event_id: str,
+    intensity: float,
+    source_record_id: Any = None,
+    trial_id: str = "1",
+) -> dict[str, Any]:
     return {
         "fault": fault,
         "event_id": event_id,
+        "source_record_id": source_record_id,
+        "trial_id": trial_id,
         "intensity": intensity,
         "injected_at": datetime.now(timezone.utc).isoformat(),
         "ground_truth": True,
+        # Crucial for Phase 2: only concept_drift represents a continuous numerical anomaly target
+        "is_numerical_anomaly": (fault in ("concept_drift", "numerical_anomaly")),
     }
 
 
@@ -48,10 +58,15 @@ def main() -> None:
     parser.add_argument("--fault", required=True, choices=["schema_drift", "missing_data", "corruption", "duplicate", "concept_drift"])
     parser.add_argument("--count", type=int, default=100)
     parser.add_argument("--intensity", type=float, default=0.3)
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for deterministic reproducibility")
     parser.add_argument("--source-topic", default=os.getenv("CLEAN_TOPIC", "taxi-clean"))
     parser.add_argument("--output-topic", default=os.getenv("RAW_TOPIC", "taxi-raw"))
     parser.add_argument("--incident-topic", default=os.getenv("INCIDENT_TOPIC", "shield-incidents"))
+    parser.add_argument("--manifest", default=None, help="Optional output path for incident manifest")
     args = parser.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
 
     bootstrap = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
     source_topic = args.source_topic
@@ -68,7 +83,9 @@ def main() -> None:
     consumer.subscribe([source_topic])
 
     injected = 0
-    run_id = str(uuid.uuid4())
+    run_id = f"seed-{args.seed}" if args.seed is not None else str(uuid.uuid4())
+    incidents_list: list[dict[str, Any]] = []
+
     while injected < args.count:
         message = consumer.poll(1.0)
         if message is None:
@@ -76,17 +93,33 @@ def main() -> None:
         if message.error():
             raise RuntimeError(message.error())
         event = json.loads(message.value())
+        source_record_id = event.get("source_record_id")
+        trial_id = str(event.get("trial_id", "1"))
         event["source_event_id"] = event.get("event_id")
         event["event_id"] = str(uuid.uuid5(uuid.NAMESPACE_OID, f"{run_id}-{args.fault}-{injected}"))
         for changed in mutate(event, args.fault, args.intensity):
             producer.produce(output_topic, key=changed["event_id"], value=json.dumps(changed).encode())
-        truth = incident(args.fault, event["event_id"], args.intensity)
+        truth = incident(
+            args.fault,
+            event["event_id"],
+            args.intensity,
+            source_record_id=source_record_id,
+            trial_id=trial_id,
+        )
         producer.produce(incident_topic, key=event["event_id"], value=json.dumps(truth).encode())
+        incidents_list.append(truth)
         injected += 1
 
     producer.flush()
     consumer.close()
-    print(f"Injected {injected} {args.fault} incidents")
+
+    if args.manifest and incidents_list:
+        manifest_path = Path(args.manifest)
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(incidents_list, indent=2), encoding="utf-8")
+        print(f"Saved incident manifest: {manifest_path} ({len(incidents_list)} incidents)")
+
+    print(f"Injected {injected} {args.fault} incidents (seed={args.seed})")
 
 
 if __name__ == "__main__":

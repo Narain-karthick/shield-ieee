@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-10-20T07:29:43.775992+00:00",
+  "source_dataset": "data\\yellow_tripdata_2025-01.parquet",
+  "total_source_rows_read": 30000,
+  "partitions": {
+    "warmup": {
+      "start_offset": 0,
+      "end_offset": 10000,
+      "row_count": 10000,
+      "purpose": "Initialize Welford online mean and variance estimators",
+      "final_welford_stats": {
+        "count": 9607,
+        "mean_distance": 2.4757,
+        "mean_fare": 15.6679
+      }
+    },
+    "calibration": {
+      "start_offset": 10000,
+      "end_offset": 20000,
+      "row_count": 10075,
+      "file_csv": "data\\calibration_events.csv",
+      "file_jsonl": "data\\calibration_events.jsonl",
+      "numerical_anomalies": 200,
+      "clean_or_rule_events": 9875,
+      "fault_breakdown": {
+        "healthy": 9500,
+        "concept_drift": 200,
+        "duplicate": 150,
+        "schema_drift": 75,
+        "missing_data": 75,
+        "corruption": 75
+      }
+    },
+    "held_out_test": {
+      "start_offset": 20000,
+      "end_offset": 30000,
+      "row_count": 10075,
+      "file_csv": "data\\held_out_events.csv",
+      "file_jsonl": "data\\held_out_events.jsonl",
+      "numerical_anomalies": 200,
+      "clean_or_rule_events": 9875,
+      "fault_breakdown": {
+        "healthy": 9500,
+        "concept_drift": 200,
+        "duplicate": 150,
+        "corruption": 75,
+        "missing_data": 75,
+        "schema_drift": 75
+      }
+    }
+  },
+  "leakage_verification": {
+    "calibration_source_id_min": 10000,
+    "calibration_source_id_max": 19999,
+    "test_source_id_min": 20000,
+    "test_source_id_max": 29999,
+    "source_id_intersection_size": 0,
+    "leakage_free": true
+  },
+  "random_seeds": {
+    "base_seed": 42,
+    "calibration_seed": 43,
+    "test_seed": 44
+  }
+}

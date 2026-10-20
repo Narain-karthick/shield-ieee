@@ -156,6 +156,12 @@ public final class ShieldStreamPipeline {
 
         private transient ValueState<RunningStats> statistics;
 
+        private double calibrationA;
+        private double calibrationB;
+        private boolean fullTelemetry;
+        private boolean calibratedPolicyActive;
+        private double calibratedThreshold;
+
         @Override
         public void open(OpenContext context) {
 
@@ -175,6 +181,12 @@ public final class ShieldStreamPipeline {
                                     RunningStats.class
                             )
                     );
+
+            calibrationA = parseDouble(System.getenv("CALIBRATION_A"), 1.0);
+            calibrationB = parseDouble(System.getenv("CALIBRATION_B"), 0.0);
+            fullTelemetry = Boolean.parseBoolean(System.getenv("FULL_TELEMETRY"));
+            calibratedPolicyActive = Boolean.parseBoolean(System.getenv("CALIBRATED_POLICY_ACTIVE"));
+            calibratedThreshold = parseDouble(System.getenv("CALIBRATED_THRESHOLD"), 0.50);
         }
 
         @Override
@@ -228,6 +240,16 @@ public final class ShieldStreamPipeline {
             String eventId =
                     event.path("event_id").asText();
 
+            Long sourceRecordId =
+                    event.hasNonNull("source_record_id")
+                            ? event.get("source_record_id").asLong()
+                            : null;
+
+            String trialId =
+                    event.hasNonNull("trial_id")
+                            ? event.get("trial_id").asText()
+                            : null;
+
             if (seenIds.contains(eventId)) {
 
                 context.output(DLQ, raw);
@@ -239,7 +261,11 @@ public final class ShieldStreamPipeline {
                                 "DUPLICATE",
                                 1.0,
                                 0.999,
-                                "DROP_DUPLICATE"
+                                "DROP_DUPLICATE",
+                                Double.NaN,
+                                Double.NaN,
+                                sourceRecordId,
+                                trialId
                         )
                 );
 
@@ -283,7 +309,11 @@ public final class ShieldStreamPipeline {
                                     "SCHEMA_DRIFT",
                                     0.95,
                                     0.98,
-                                    "AUTO_REPAIR"
+                                    "AUTO_REPAIR",
+                                    Double.NaN,
+                                    Double.NaN,
+                                    sourceRecordId,
+                                    trialId
                             )
                     );
 
@@ -307,7 +337,11 @@ public final class ShieldStreamPipeline {
                                 fault,
                                 1.0,
                                 0.99,
-                                "ABSTAIN_QUARANTINE"
+                                "ABSTAIN_QUARANTINE",
+                                Double.NaN,
+                                Double.NaN,
+                                sourceRecordId,
+                                trialId
                         )
                 );
 
@@ -341,9 +375,17 @@ public final class ShieldStreamPipeline {
                             stats.count / 500.0
                     );
 
-            if (stats.count >= 500
-                    && risk >= 0.80
-                    && confidence >= 0.80) {
+            // Platt-scaled calibrated probability for continuous numerical anomaly
+            double margin = maximumZ - 2.5;
+            double calibratedProb = sigmoid(calibrationA * margin + calibrationB);
+
+            // Operational decision: default shadow mode preserves original risk >= 0.80 check.
+            // Optional active policy mode gates on calibrated_fault_probability.
+            boolean shouldQuarantine = calibratedPolicyActive
+                    ? (stats.count >= 500 && calibratedProb >= calibratedThreshold && confidence >= 0.80)
+                    : (stats.count >= 500 && risk >= 0.80 && confidence >= 0.80);
+
+            if (shouldQuarantine) {
 
                 context.output(DLQ, raw);
 
@@ -354,7 +396,11 @@ public final class ShieldStreamPipeline {
                                 "CONCEPT_DRIFT",
                                 risk,
                                 confidence,
-                                "ABSTAIN_QUARANTINE"
+                                "ABSTAIN_QUARANTINE",
+                                maximumZ,
+                                calibratedProb,
+                                sourceRecordId,
+                                trialId
                         )
                 );
 
@@ -374,7 +420,27 @@ public final class ShieldStreamPipeline {
                                 "DRIFT_WARNING",
                                 risk,
                                 confidence,
-                                "SHADOW_ACCEPT"
+                                "SHADOW_ACCEPT",
+                                maximumZ,
+                                calibratedProb,
+                                sourceRecordId,
+                                trialId
+                        )
+                );
+            } else if (fullTelemetry) {
+
+                context.output(
+                        METRICS,
+                        metric(
+                                eventId,
+                                "NORMAL",
+                                risk,
+                                confidence,
+                                "ACCEPT",
+                                maximumZ,
+                                calibratedProb,
+                                sourceRecordId,
+                                trialId
                         )
                 );
             }
@@ -541,6 +607,31 @@ public final class ShieldStreamPipeline {
             String action
     ) throws Exception {
 
+        return metric(
+                eventId,
+                fault,
+                risk,
+                confidence,
+                action,
+                Double.NaN,
+                Double.NaN,
+                null,
+                null
+        );
+    }
+
+    static String metric(
+            String eventId,
+            String fault,
+            double risk,
+            double confidence,
+            String action,
+            double maxZ,
+            double calibratedProb,
+            Long sourceRecordId,
+            String trialId
+    ) throws Exception {
+
         ObjectNode node =
                 JSON.createObjectNode();
 
@@ -550,12 +641,43 @@ public final class ShieldStreamPipeline {
         node.put("confidence", confidence);
         node.put("action", action);
 
+        if (!Double.isNaN(maxZ)) {
+            node.put("max_z", maxZ);
+        }
+        if (!Double.isNaN(calibratedProb)) {
+            node.put("calibrated_fault_probability", calibratedProb);
+        }
+        if (sourceRecordId != null) {
+            node.put("source_record_id", sourceRecordId);
+        }
+        if (trialId != null) {
+            node.put("trial_id", trialId);
+        }
+
         node.put(
                 "observed_at",
                 Instant.now().toString()
         );
 
         return JSON.writeValueAsString(node);
+    }
+
+    static double parseDouble(
+            String value,
+            double fallback
+    ) {
+
+        if (value == null
+                || value.isBlank()) {
+
+            return fallback;
+        }
+
+        try {
+            return Double.parseDouble(value);
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     static String repair(

@@ -1,0 +1,26 @@
+{
+  "model_type": "platt_scaling_logistic",
+  "fit_timestamp": "2026-10-20T07:30:55.177825+00:00",
+  "feature_mode": "margin",
+  "feature_name": "margin_z_minus_2_5",
+  "feature_formula": "max_z - 2.5",
+  "parameters": {
+    "A_slope": 0.303621,
+    "B_intercept": -3.848492,
+    "equivalent_direct_z_slope": 0.303621,
+    "equivalent_direct_z_intercept": -4.607544
+  },
+  "formula_description": "p_calibrated = 1.0 / (1.0 + exp(-(0.303621 * (max_z - 2.5) + -3.848492)))",
+  "training_diagnostics": {
+    "total_samples": 9796,
+    "positive_samples": 200,
+    "negative_samples": 9596,
+    "positive_rate": 0.0204,
+    "train_log_loss_calibrated": 0.080748,
+    "train_log_loss_uncalibrated": 0.432838,
+    "train_brier_calibrated": 0.017432,
+    "train_brier_uncalibrated": 0.091744,
+    "solver_iterations": 8,
+    "converged": true
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "evaluation_timestamp": "2026-10-20T07:32:24.643594+00:00",
+  "dataset": {
+    "file": "data\\held_out_events.csv",
+    "total_records": 10075,
+    "eligible_continuous_records": 9791,
+    "positive_numerical_anomalies": 200,
+    "negative_healthy_records": 9591,
+    "base_rate": 0.0204
+  },
+  "model_parameters_used": {
+    "A_slope": 0.303621,
+    "B_intercept": -3.848492,
+    "equivalent_direct_z_slope": 0.303621,
+    "equivalent_direct_z_intercept": -4.607544
+  },
+  "calibration_metrics": {
+    "brier_score": {
+      "uncalibrated_raw_risk": 0.184179,
+      "platt_calibrated": 0.017472,
+      "absolute_improvement": 0.166707,
+      "relative_improvement_pct": 90.51
+    },
+    "log_loss_nll": {
+      "uncalibrated_raw_risk": 0.797276,
+      "platt_calibrated": 0.088029,
+      "absolute_improvement": 0.709247,
+      "relative_improvement_pct": 88.96
+    },
+    "expected_calibration_error_ece": {
+      "uncalibrated_raw_risk_uniform_10bins": 0.295281,
+      "platt_calibrated_uniform_10bins": 0.009547,
+      "platt_calibrated_quantile_10bins": 0.010902,
+      "ece_improvement": 0.285734,
+      "relative_improvement_pct": 96.77
+    },
+    "maximum_calibration_error_mce": {
+      "uncalibrated_raw_risk": 0.893542,
+      "platt_calibrated": 0.392127
+    }
+  },
+  "discrimination_metrics": {
+    "auroc": {
+      "uncalibrated_raw_risk": 0.792497,
+      "platt_calibrated": 0.792496,
+      "note": "Monotonic transformation preserves ranking order."
+    },
+    "auprc": {
+      "uncalibrated_raw_risk": 0.259933,
+      "platt_calibrated": 0.271465
+    }
+  },
+  "decision_threshold_evaluation": {
+    "calibrated_standard_tau_0_50": {
+      "threshold": 0.5,
+      "true_positives": 45,
+      "false_positives": 32,
+      "false_negatives": 155,
+      "true_negatives": 9559,
+      "precision": 0.5844,
+      "recall": 0.225,
+      "f1": 0.3249
+    },
+    "calibrated_tuned_tau": {
+      "threshold": 0.12,
+      "tuning_method": "Optimized on disjoint calibration split",
+      "true_positives": 70,
+      "false_positives": 128,
+      "false_negatives": 130,
+      "true_negatives": 9463,
+      "precision": 0.3535,
+      "recall": 0.35,
+      "f1": 0.3518
+    },
+    "baseline_uncalibrated_raw_risk_0_80": {
+      "threshold": 0.8,
+      "true_positives": 118,
+      "false_positives": 1279,
+      "false_negatives": 82,
+      "true_negatives": 8312,
+      "precision": 0.0845,
+      "recall": 0.59,
+      "f1": 0.1478
+    }
+  },
+  "artifacts_generated": {
+    "metrics_json": "results\\calibration\\held_out_metrics.json",
+    "calibration_bins_csv": "results\\calibration\\calibration_bins.csv",
+    "reliability_diagram_png": "results\\calibration\\reliability_diagram.png",
+    "reliability_diagram_pdf": "results\\calibration\\reliability_diagram.pdf"
+  }
+}
